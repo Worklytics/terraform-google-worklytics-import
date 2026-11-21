@@ -113,6 +113,42 @@ run "grants_access_to_each_existing_bucket" {
   }
 }
 
+run "rejects_resource_name_prefix_with_dots" {
+  command = plan
+
+  variables {
+    resource_name_prefix = "acme.worklytics-import"
+  }
+
+  expect_failures = [
+    var.resource_name_prefix,
+  ]
+}
+
+run "rejects_resource_name_prefix_starting_goog" {
+  command = plan
+
+  variables {
+    resource_name_prefix = "goog-import"
+  }
+
+  expect_failures = [
+    var.resource_name_prefix,
+  ]
+}
+
+run "rejects_resource_name_prefix_containing_google" {
+  command = plan
+
+  variables {
+    resource_name_prefix = "acme-google-import"
+  }
+
+  expect_failures = [
+    var.resource_name_prefix,
+  ]
+}
+
 run "rejects_invalid_resource_name_prefix" {
   command = plan
 

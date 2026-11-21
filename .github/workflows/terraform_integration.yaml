@@ -7,8 +7,7 @@ on:
       - main
       - 'rc-*'
 
-# Only one integration run per ref; cancel superseded runs so applies don't pile up
-# against the shared CI GCP project.
+# Only one integration run per ref, so applies don't pile up against the shared CI GCP project.
 #
 # worklytics-infra gh-action-oidc writes GCP_SERVICE_ACCOUNT /
 # GCP_WORKLOAD_IDENTITY_PROVIDER as *secrets* on public repos and *variables*
@@ -17,7 +16,9 @@ on:
 # from the SA and would overwrite it.
 concurrency:
   group: tf-integration-${{ github.ref }}
-  cancel-in-progress: true
+  # Do not cancel an in-flight run: TF state lives only on the runner, so cancelling
+  # mid-apply/destroy can orphan buckets in the CI project. Runs still serialize per ref.
+  cancel-in-progress: false
 
 env:
   CI_SA_EMAIL: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT || 'gh-actions-tf-google-import@worklytics-corp.iam.gserviceaccount.com' }}

@@ -9,11 +9,14 @@ variable "resource_name_prefix" {
       length(trimsuffix(replace(lower(var.resource_name_prefix), "_", "-"), "-")) >= 1
       && length(trimsuffix(replace(lower(var.resource_name_prefix), "_", "-"), "-")) <= 54
       && can(regex(
-        "^[a-z0-9]([a-z0-9.-]{0,52}[a-z0-9])?$",
+        "^[a-z0-9]([a-z0-9-]{0,52}[a-z0-9])?$",
         trimsuffix(replace(lower(var.resource_name_prefix), "_", "-"), "-")
       ))
+      # GCS reserves names starting with "goog" or containing "google" (or close misspellings).
+      && !can(regex("^goog", trimsuffix(replace(lower(var.resource_name_prefix), "_", "-"), "-")))
+      && !can(regex("g[o0][o0]gle", trimsuffix(replace(lower(var.resource_name_prefix), "_", "-"), "-")))
     )
-    error_message = "`resource_name_prefix` (lowercased, underscores to hyphens, trailing hyphen stripped) must be 1-54 chars starting and ending with a letter or digit, using only letters, digits, hyphens, and dots."
+    error_message = "`resource_name_prefix` (lowercased, underscores to hyphens, trailing hyphen stripped) must be 1-54 chars starting and ending with a letter or digit, using only letters, digits, and hyphens. Dots are not allowed (dotted bucket names need domain verification), and it must not start with \"goog\" or contain \"google\"."
   }
 }
 

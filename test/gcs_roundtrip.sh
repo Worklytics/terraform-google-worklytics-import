@@ -6,7 +6,7 @@
 #   ./test/gcs_roundtrip.sh <tenant_sa_email> <bucket_name>
 #
 # Prerequisites:
-#   - gcloud / gsutil authenticated as an identity that can write to the bucket
+#   - gcloud authenticated as an identity that can write to the bucket
 #     and impersonate tenant_sa_email
 set -euo pipefail
 
@@ -34,8 +34,8 @@ retry() {
   stdout_file="$(mktemp "${TMP_DIR}/retry-out.XXXXXX")"
   stderr_file="$(mktemp "${TMP_DIR}/retry-err.XXXXXX")"
   while (( attempt <= max_attempts )); do
-    # Do not merge stderr into the captured body: gsutil prints an
-    # impersonation WARNING on stdout-adjacent stderr that is not object data.
+    # Do not merge stderr into the captured body: gcloud prints an
+    # impersonation WARNING on stderr that is not object data.
     if "$@" >"${stdout_file}" 2>"${stderr_file}"; then
       cat "${stderr_file}" >&2
       cat "${stdout_file}"
@@ -51,10 +51,10 @@ retry() {
 }
 
 echo "Writing test object as CI identity..."
-gsutil cp "${TMP_DIR}/test.txt" "${OBJECT_URI}"
+gcloud storage cp "${TMP_DIR}/test.txt" "${OBJECT_URI}"
 
 echo "Reading test object as Worklytics tenant SA..."
-DOWNLOADED="$(retry gsutil --impersonate-service-account="${TENANT_SA_EMAIL}" cat "${OBJECT_URI}")"
+DOWNLOADED="$(retry gcloud storage cat --impersonate-service-account="${TENANT_SA_EMAIL}" "${OBJECT_URI}")"
 
 if [[ "${DOWNLOADED}" != "${BODY}" ]]; then
   echo "Object content mismatch." >&2
@@ -64,4 +64,4 @@ if [[ "${DOWNLOADED}" != "${BODY}" ]]; then
 fi
 
 echo "Read round-trip succeeded."
-gsutil rm "${OBJECT_URI}" || true
+gcloud storage rm "${OBJECT_URI}" || true
